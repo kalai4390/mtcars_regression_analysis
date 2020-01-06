@@ -1,0 +1,122 @@
+---
+title: "mtcars data analysis using regression models"
+author: "kalai"
+date: "12/10/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Summary
+
+mtcars dataset contains a collection of data compiled for 32 cars analyzed among 11 parameters. The following two questions are taken up for analysis in this work. 
+
+1. Is an automatic or manual transmission better for efficent fuel consumption
+2. Quantifying the MPG difference between automatic and manual transmissions
+
+First, exploratory data analysis is performed to analyse and understand the data. Then, regression models are used to determine the relationship and correlation among the measured parameters in the dataset. Regression analysis is done by including and excluding different parameters contained in the dataset. 
+
+The main objective is to infer how mpg is affected by manual and automatic transmission. An analysis is also performed to measure the influence of other parameters present in the dataset using regression analysis.
+
+## Exploring the data 
+
+```{r} 
+library(datasets) #loading the data
+data(mtcars)  
+```
+
+```{r}
+head(mtcars) #exploring the dataset
+summary(mtcars)
+str(mtcars)
+```
+
+Let us visualize the mileage (mpg) obtained for automatic and manual transmission
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+mtcars$am <- as.factor(mtcars$am)
+h <- ggplot(mtcars, aes(x=am, y=mpg,fill=am)) + geom_boxplot()
+h <- h+labs(title = "MPG for Automatic vs Manual Transmission")
+h <- h + xlab("Transmission Type")
+h <- h + ylab("MPG")
+h <- h + labs(fill = "0=Automatic, 1=Manual")
+h
+```
+
+It can be inferred from the plot that the mode of transmission has a significant impact on the mileage. It can also be seen that the median for automatic transmission is situated around the middle of the boxplot, whereas the median for manual transmission is situated way below the box, indicating larger dispersion of values.
+
+Let us do a statistical analysis of the 'mpg' and 'am' column in the dataset
+
+```{r}
+s = split(mtcars$mpg, mtcars$am)
+
+sapply(s, mean) # finding the mean
+sapply(s, sd) # standard deviation
+```
+
+To frame the hypothesis test, let's rearrange the required data
+
+```{r}
+automatic <- mtcars[mtcars$am == "0",]
+manual <- mtcars[mtcars$am == "1",]
+```
+
+### Performing t-test 
+
+```{r}
+t.test(automatic$mpg, manual$mpg)  
+```
+
+From the result of the t-test it can be concluded that null hypothesis is rejected.
+It implies that mileage is significantly affected by the type of transmission.
+
+## Regression analysis
+
+To analyse how the transmission type impacts mileage, regression analysis is performed. Diferent variables of the datset are included and excluded to study the impact of those attributes over determining the result of the regression model.
+
+
+A linear regression is performed by including all the variables in the dataset
+
+```{r}
+R_all <- lm(mpg ~., data = mtcars)
+summary(R_all)
+```
+
+```{r}
+RA <- lm(mpg ~ am, data = mtcars)
+summary(RA)
+```
+
+```{r}
+RS <- lm(mpg~am + cyl + hp + wt + disp, data = mtcars)
+summary(RS)
+anova(RA, RS)
+
+```
+
+
+### Plots of the regression model residuals
+
+```{r}
+## regression residual plots considering all attributes in the dataset
+par(mfrow = c(2,2))
+plot(R_all)
+```
+
+```{r}
+## regression residual plots considering selected attributes in the dataset
+par(mfrow = c(2,2))
+plot(RS)
+```
+
+In the linear regression between the mileage and transmission type, manual transmission had 7.245 mpg better mileage than automatic. However, viewing the R-squared value, we can infer mileage as per transmission types affects only around 36% of mpg performance metric. 
+
+Hence to take into account of the effect of other atributes over mpg, multivariate regression is performed. 
+
+First, all the variables are taken into account for regression analysis.An increase in 2.5 mpg can be observed while factoring in all the varibles. The R-squared value is around 87% indicating a greater impact.
+
+To have a more concrete analysis, I have done a regression on mpg to am, with number of cylinders, horsepower,weight and displacement of the vehicle as additional variables to the regression model. An increase in 1.5 mpg is observed for manual transmission when compared with automatic transmission. The impact (R-squared value) is also around 85 %.  
